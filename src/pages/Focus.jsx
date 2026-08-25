@@ -9,7 +9,6 @@ import { formatRemainingTimer } from '@/lib/focusHelper';
 import { playChime } from '@/lib/sound';
 import {
     Moon,
-    Sparkles,
     Check,
     X,
     ExternalLink,
@@ -303,10 +302,10 @@ export default function Focus() {
                 {completionReward !== null ? (
                     <div className="space-y-3 animate-fade py-8">
                         <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary mx-auto shadow-inner">
-                            <Sparkles className="w-9 h-9 animate-spin-slow" />
+                            <Award className="w-9 h-9" />
                         </div>
                         <h2 className="font-heading text-2xl font-bold text-primary">
-                            +{completionReward} pontos! ✨
+                            +{completionReward} pontos!
                         </h2>
                         <p className="text-xs text-muted-foreground">
                             Atividade concluída com sucesso.

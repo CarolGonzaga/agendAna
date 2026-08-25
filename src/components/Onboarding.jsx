@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppData } from '@/lib/AppDataContext';
-import { Moon, Bell, Sparkles } from 'lucide-react';
+import { Moon, Bell, Gift } from 'lucide-react';
 
 const STEPS = [
     { icon: Moon, title: 'Seu Grimório está pronto.', text: 'Ele vai mostrar uma coisa de cada vez com calma e foco.' },
     { icon: Bell, title: 'Quer receber lembretes?', text: 'Você pode ativar agora ou depois nas Configurações.', actions: 'notifications' },
-    { icon: Sparkles, title: 'Conclua tarefas, ganhe pontos e troque por recompensas.', text: 'Uma coisa de cada vez. Sem pressa.' },
+    { icon: Gift, title: 'Conclua tarefas, ganhe pontos e troque por recompensas.', text: 'Uma coisa de cada vez. Sem pressa.' },
 ];
 
 export default function Onboarding() {

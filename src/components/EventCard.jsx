@@ -1,7 +1,7 @@
 import React from 'react';
 import { categoryColor } from '@/lib/categories';
 import { formatTime, minutesToLabel, durationMinutes } from '@/lib/datetime';
-import { Check, Sparkles, Moon } from 'lucide-react';
+import { Check, Gift, Moon } from 'lucide-react';
 
 export default function EventCard({ occ, onComplete, onEdit, compact }) {
     const s = occ.series;
@@ -20,7 +20,7 @@ export default function EventCard({ occ, onComplete, onEdit, compact }) {
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                        {isReward && <Sparkles className="w-4 h-4 text-primary shrink-0" />}
+                        {isReward && <Gift className="w-4 h-4 text-primary shrink-0" />}
                         {isFree && <Moon className="w-4 h-4 text-muted-foreground shrink-0" />}
                         <span className={`font-medium truncate ${isFree ? 'text-muted-foreground' : ''}`}>
                             {isMissed ? 'Encerrado' : s.title}

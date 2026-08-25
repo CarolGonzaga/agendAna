@@ -20,7 +20,7 @@ import {
 import ConfirmDialog from '@/components/ConfirmDialog';
 import AppIcon, { AVAILABLE_AVATAR_ICONS } from '@/components/AppIcon';
 import { toast } from 'sonner';
-import { Upload, LogOut, Bell, Volume2, Check, X, Shield, Sparkles, User, Settings2, Moon, Sun, Laptop } from 'lucide-react';
+import { Upload, LogOut, Bell, Volume2, Check, X, Shield, Award, User, Settings2, Moon, Sun, Laptop } from 'lucide-react';
 
 export default function Profile() {
     const { profile, settings, updateProfile, updateSettings } = useAppData();
@@ -208,7 +208,7 @@ export default function Profile() {
                             {lvl.name} — Nível {lvl.level}
                         </div>
                     </div>
-                    <Sparkles className="w-6 h-6 text-primary" />
+                    <Award className="w-6 h-6 text-primary" />
                 </div>
 
                 <div className="space-y-1.5">

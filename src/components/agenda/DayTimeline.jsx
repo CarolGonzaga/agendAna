@@ -2,7 +2,7 @@ import React from 'react';
 import EventCard from '@/components/EventCard';
 import { categoryColor } from '@/lib/categories';
 import { formatTime } from '@/lib/datetime';
-import { Check, Moon, Sparkles } from 'lucide-react';
+import { Check, Moon, Gift } from 'lucide-react';
 
 const SLOT_HEIGHT = 28; // px per 30 min
 
@@ -66,7 +66,7 @@ export default function DayTimeline({ occs, date, onComplete, onEdit, onCreateSl
                                 style={{ borderLeftColor: color }}
                             >
                                 <div className="text-[11px] font-medium truncate flex items-center gap-1">
-                                    {o.series.event_type === 'reward' && <Sparkles className="w-3 h-3 text-primary shrink-0" />}
+                                    {o.series.event_type === 'reward' && <Gift className="w-3 h-3 text-primary shrink-0" />}
                                     {o.series.title}
                                 </div>
                                 <div className="text-[10px] text-muted-foreground">{formatTime(start)}</div>

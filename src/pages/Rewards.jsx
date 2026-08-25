@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useAppData } from '@/lib/AppDataContext';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { Plus, Gift, Sparkles, Clock, Calendar, Check, Moon } from 'lucide-react';
+import { Plus, Gift, Award, Clock, Calendar, Check, Moon } from 'lucide-react';
 import RewardModal from '@/components/RewardModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import AppIcon from '@/components/AppIcon';
@@ -162,7 +162,7 @@ export default function Rewards() {
                     </div>
                 </div>
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Sparkles className="w-7 h-7" />
+                    <Award className="w-7 h-7" />
                 </div>
             </div>
 

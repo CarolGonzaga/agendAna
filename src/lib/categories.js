@@ -19,15 +19,15 @@ export function categoryColor(cat) {
 
 export const AVATAR_ICONS = [
     'moon',
-    'sparkles',
+    'gem',
     'wand',
     'crown',
     'book',
     'flame',
     'heart',
     'flower',
-    'gem',
+    'shield',
     'feather',
     'cat',
-    'star',
+    'compass',
 ];

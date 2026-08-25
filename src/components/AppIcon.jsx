@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     Moon,
-    Sparkles,
     BookOpen,
     Flame,
     Heart,
@@ -23,7 +22,6 @@ import {
     Calendar,
     Cat,
     Feather,
-    Star,
     Compass,
     Shield,
     Zap,
@@ -33,7 +31,6 @@ import {
 export const ICON_MAP = {
     // Standard names
     moon: Moon,
-    sparkles: Sparkles,
     book: BookOpen,
     flame: Flame,
     heart: Heart,
@@ -54,22 +51,23 @@ export const ICON_MAP = {
     calendar: Calendar,
     cat: Cat,
     feather: Feather,
-    star: Star,
     compass: Compass,
     shield: Shield,
     zap: Zap,
     gem: Gem,
 
-    // Fallback mappings for emojis previously stored in database
+    // Fallback mappings
+    sparkles: Gift,
+    star: Gem,
     '🌙': Moon,
-    '✨': Sparkles,
+    '✨': Gift,
     '📚': BookOpen,
     '🍿': Film,
     '☕': Coffee,
     '🍷': Utensils,
     '🌹': Flower2,
     '🎮': Gamepad2,
-    '🛁': Sparkles,
+    '🛁': Heart,
     '🍫': Gift,
     '🛋️': Smile,
     '🕯️': Flame,
@@ -83,17 +81,17 @@ export const ICON_MAP = {
 
 export const AVAILABLE_AVATAR_ICONS = [
     { id: 'moon', label: 'Lua', icon: Moon },
-    { id: 'sparkles', label: 'Magia', icon: Sparkles },
+    { id: 'gem', label: 'Cristal', icon: Gem },
     { id: 'wand', label: 'Varinha', icon: Wand2 },
     { id: 'crown', label: 'Coroa', icon: Crown },
     { id: 'book', label: 'Grimório', icon: BookOpen },
     { id: 'flame', label: 'Vela / Chama', icon: Flame },
     { id: 'heart', label: 'Coração', icon: Heart },
     { id: 'flower', label: 'Rosa', icon: Flower2 },
-    { id: 'gem', label: 'Cristal', icon: Gem },
+    { id: 'shield', label: 'Escudo', icon: Shield },
     { id: 'feather', label: 'Pena', icon: Feather },
     { id: 'cat', label: 'Gato', icon: Cat },
-    { id: 'star', label: 'Estrela', icon: Star },
+    { id: 'compass', label: 'Bússola', icon: Compass },
 ];
 
 export const AVAILABLE_REWARD_ICONS = [
@@ -104,8 +102,8 @@ export const AVAILABLE_REWARD_ICONS = [
     { id: 'music', label: 'Música', icon: Music },
     { id: 'utensils', label: 'Jantar', icon: Utensils },
     { id: 'flower', label: 'Descanso', icon: Flower2 },
-    { id: 'sparkles', label: 'Mimo Especial', icon: Sparkles },
     { id: 'gift', label: 'Presente', icon: Gift },
+    { id: 'gem', label: 'Mimo Especial', icon: Gem },
     { id: 'smile', label: 'Relaxar', icon: Smile },
     { id: 'trophy', label: 'Conquista', icon: Trophy },
     { id: 'heart', label: 'Autocuidado', icon: Heart },

@@ -7,7 +7,7 @@ import { greeting, formatDateLong, formatTime, minutesToLabel, durationMinutes }
 import { categoryColor } from '@/lib/categories';
 import { playChime } from '@/lib/sound';
 import { supabase } from '@/lib/supabase';
-import { Check, ChevronDown, ChevronUp, Plus, Sparkles, Moon, Clock, Flame } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Plus, Award, Moon, Clock, Flame } from 'lucide-react';
 import EventCard from '@/components/EventCard';
 import StarBurst from '@/components/StarBurst';
 import LevelUpModal from '@/components/LevelUpModal';
@@ -275,7 +275,7 @@ export default function Home() {
                         <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground pt-1">
                             <span>{doneCount} de {eventCount} atividades concluídas</span>
                             <span className="text-primary font-medium flex items-center gap-1">
-                                <Sparkles className="w-3.5 h-3.5" /> +{pointsToday} pontos hoje
+                                <Award className="w-3.5 h-3.5" /> +{pointsToday} pontos hoje
                             </span>
                         </div>
                     </section>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Award, Sparkles } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 export default function LevelUpModal({ level, onDone }) {
     return (
