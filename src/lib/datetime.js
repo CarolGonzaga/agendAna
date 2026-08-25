@@ -8,19 +8,33 @@ export function todayISO() {
 }
 
 export function dateToStr(d) {
-    return format(d, 'yyyy-MM-dd');
+    if (!d) return '';
+    if (typeof d === 'string') return d.slice(0, 10);
+    if (d instanceof Date && !isNaN(d.getTime())) {
+        return format(d, 'yyyy-MM-dd');
+    }
+    return '';
 }
 
 export function formatDateLong(date) {
-    return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
+    return format(d, "EEEE, d 'de' MMMM", { locale: ptBR });
 }
 
 export function formatDateShort(date) {
-    return format(date, "d 'de' MMMM", { locale: ptBR });
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
+    return format(d, "d 'de' MMMM", { locale: ptBR });
 }
 
 export function formatWeekday(date) {
-    return format(date, 'EEEE', { locale: ptBR });
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
+    return format(d, 'EEEE', { locale: ptBR });
 }
 
 export function greeting() {
@@ -31,14 +45,42 @@ export function greeting() {
 }
 
 export function formatTime(date) {
-    return format(date, 'HH:mm');
+    if (!date) return '';
+    if (typeof date === 'string') {
+        if (date.includes('T')) {
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? '' : format(d, 'HH:mm');
+        }
+        // Time string "07:00:00" or "07:00"
+        return date.slice(0, 5);
+    }
+    if (date instanceof Date && !isNaN(date.getTime())) {
+        return format(date, 'HH:mm');
+    }
+    return '';
+}
+
+export function normalizeTimeStr(timeStr) {
+    if (!timeStr) return '00:00:00';
+    const parts = String(timeStr).trim().split(':');
+    const h = (parts[0] || '00').padStart(2, '0');
+    const m = (parts[1] || '00').padStart(2, '0');
+    const s = (parts[2] || '00').padStart(2, '0');
+    return `${h}:${m}:${s}`;
 }
 
 export function combine(dateStr, timeStr) {
-    return new Date(`${dateStr}T${timeStr}:00`);
+    const d = dateToStr(dateStr);
+    const t = normalizeTimeStr(timeStr);
+    const dt = new Date(`${d}T${t}`);
+    if (isNaN(dt.getTime())) {
+        return new Date();
+    }
+    return dt;
 }
 
 export function minutesToLabel(min) {
+    if (!min && min !== 0) return '0 min';
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -46,9 +88,12 @@ export function minutesToLabel(min) {
 }
 
 export function durationMinutes(startIso, endIso) {
-    return Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+    if (!startIso || !endIso) return 0;
+    const diff = Math.round((new Date(endIso) - new Date(startIso)) / 60000);
+    return isNaN(diff) ? 0 : diff;
 }
 
 export function addDaysStr(dateStr, n) {
-    return dateToStr(addDays(parseISO(dateStr + 'T00:00:00'), n));
+    const d = typeof dateStr === 'string' ? parseISO(dateStr.slice(0, 10) + 'T00:00:00') : dateStr;
+    return dateToStr(addDays(d, n));
 }

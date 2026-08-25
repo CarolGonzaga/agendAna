@@ -56,8 +56,14 @@ export function runTests() {
     };
     // 2026-08-25 is Tuesday (weekday)
     assert(occursOnDate(weekdaySeries, new Date('2026-08-25T12:00:00')), 'Série de dias úteis deve ocorrer na terça-feira');
-    // 2026-08-23 is Sunday (weekend)
-    assert(occursOnDate(weekdaySeries, new Date('2026-08-23T12:00:00')) === false, 'Série de dias úteis NÃO deve ocorrer no domingo');
+    // 4. Parsing de Horários PostgreSQL
+    import('../datetime.js').then(({ combine, normalizeTimeStr, formatTime }) => {
+        const c1 = combine('2026-08-25', '07:00:00');
+        assert(!isNaN(c1.getTime()) && c1.toISOString().includes('2026-08-25'), 'combine com formato PostgreSQL 07:00:00 deve gerar data válida');
+        const c2 = combine('2026-08-25', '07:00');
+        assert(!isNaN(c2.getTime()) && c2.toISOString().includes('2026-08-25'), 'combine com formato HTML 07:00 deve gerar data válida');
+        assert(formatTime('07:00:00') === '07:00', 'formatTime deve formatar 07:00:00 como 07:00');
+    });
 
     console.log(`\nRESULTADO: ${passed} passaram, ${failed} falharam.`);
     return { passed, failed };

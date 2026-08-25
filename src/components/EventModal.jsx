@@ -16,7 +16,7 @@ import { CATEGORIES } from '@/lib/categories';
 import { useAppData } from '@/lib/AppDataContext';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchDayOccurrences, overlaps } from '@/lib/occurrences';
-import { dateToStr, formatTime } from '@/lib/datetime';
+import { dateToStr, formatTime, combine } from '@/lib/datetime';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Trash2 } from 'lucide-react';
 
@@ -105,8 +105,8 @@ export default function EventModal({
     const checkConflict = async () => {
         if (allDay || !user?.id) return null;
         const dayOccs = await fetchDayOccurrences(new Date(date + 'T00:00:00'), user.id);
-        const startIso = new Date(`${date}T${startTime}:00`).toISOString();
-        const endIso = new Date(`${date}T${endTime}:00`).toISOString();
+        const startIso = combine(date, startTime).toISOString();
+        const endIso = combine(date, endTime).toISOString();
         const cl = dayOccs.find(
             (o) =>
                 o.series.id !== editing?.id &&
