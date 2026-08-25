@@ -18,6 +18,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { fetchDayOccurrences, overlaps } from '@/lib/occurrences';
 import { dateToStr, formatTime, combine, currentTimeHHMM, isTimeBefore, addMinutesToTimeStr } from '@/lib/datetime';
 import { USER_IDS, APP_USERS } from '@/lib/users';
+import { EventUserBadges, UserAvatar } from '@/components/UserAvatar';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { Trash2, Users, Moon, Gem, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -243,7 +244,17 @@ export default function EventModal({
                     </DialogHeader>
 
                     <div className="space-y-4 py-2">
-                        {/* Duo Assignment (Para quem é o evento) */}
+                        {/* When editing: Show who this event belongs to */}
+                        {editing && (
+                            <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Compromisso de:
+                                </span>
+                                <EventUserBadges series={editing} size="sm" showNames={true} />
+                            </div>
+                        )}
+
+                        {/* Duo Assignment (Para quem é o evento ao criar) */}
                         {!editing && (
                             <div className="space-y-2 rounded-xl bg-secondary/30 p-3 border border-border">
                                 <Label className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground uppercase tracking-wider">

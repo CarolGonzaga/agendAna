@@ -2,6 +2,7 @@ import React from 'react';
 import { categoryColor } from '@/lib/categories';
 import { formatTime, minutesToLabel, durationMinutes } from '@/lib/datetime';
 import { Check, Gift, Moon } from 'lucide-react';
+import { EventUserBadges } from '@/components/UserAvatar';
 
 export default function EventCard({ occ, onComplete, onEdit, compact }) {
     const s = occ.series;
@@ -18,20 +19,23 @@ export default function EventCard({ occ, onComplete, onEdit, compact }) {
         >
             <div className="absolute left-0 top-3 bottom-3 w-1 rounded-full" style={{ background: color }} />
             <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                         {isReward && <Gift className="w-4 h-4 text-primary shrink-0" />}
                         {isFree && <Moon className="w-4 h-4 text-muted-foreground shrink-0" />}
                         <span className={`font-medium truncate ${isFree ? 'text-muted-foreground' : ''}`}>
                             {isMissed ? 'Encerrado' : s.title}
                         </span>
+                        {!isFree && <EventUserBadges series={s} size="xs" className="shrink-0 ml-1" />}
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                         {formatTime(new Date(occ.starts_at))} — {occ.ends_at ? formatTime(new Date(occ.ends_at)) : 'fim do dia'}
                         {occ.ends_at && <span className="ml-2">· {minutesToLabel(durationMinutes(occ.starts_at, occ.ends_at))}</span>}
                     </div>
                     {!compact && s.category !== 'Livre' && (
-                        <div className="text-[11px] text-muted-foreground mt-1">{s.category}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[11px] text-muted-foreground">{s.category}</span>
+                        </div>
                     )}
                 </div>
                 {onComplete && !isFree && !isReward && (

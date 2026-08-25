@@ -76,6 +76,7 @@ export default function Agenda() {
 
     const handleSave = async (payload, editing, targetUserIds = [user.id]) => {
         if (!user?.id) return;
+        const isShared = targetUserIds && targetUserIds.length > 1;
         if (editing?.id) {
             const { error } = await supabase
                 .from('event_series')
@@ -86,10 +87,20 @@ export default function Agenda() {
             const rows = (targetUserIds && targetUserIds.length ? targetUserIds : [user.id]).map((uid) => ({
                 ...payload,
                 user_id: uid,
+                is_shared: isShared,
+                target_user_ids: targetUserIds,
             }));
-            const { error } = await supabase
+            let { error } = await supabase
                 .from('event_series')
                 .insert(rows);
+            if (error && (error.message?.includes('is_shared') || error.message?.includes('target_user_ids'))) {
+                const fallbackRows = rows.map(({ is_shared, target_user_ids, ...rest }) => ({
+                    ...rest,
+                    description: isShared ? (rest.description ? `${rest.description} [shared]` : '[shared]') : rest.description,
+                }));
+                const res = await supabase.from('event_series').insert(fallbackRows);
+                error = res.error;
+            }
             if (error) console.error('Error creating event:', error);
         }
         await load();

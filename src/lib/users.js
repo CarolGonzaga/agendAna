@@ -23,3 +23,21 @@ export const APP_USERS = [
 export function getUserById(id) {
     return APP_USERS.find((u) => u.id === id) || null;
 }
+
+export function isSharedEvent(series) {
+    if (!series) return false;
+    return Boolean(
+        series.is_shared ||
+        (Array.isArray(series.target_user_ids) && series.target_user_ids.length > 1) ||
+        (typeof series.description === 'string' && series.description.includes('[shared]'))
+    );
+}
+
+export function getEventUsers(series) {
+    if (!series) return [];
+    if (isSharedEvent(series)) {
+        return APP_USERS;
+    }
+    const u = getUserById(series.user_id);
+    return u ? [u] : [];
+}

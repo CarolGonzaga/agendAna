@@ -3,7 +3,8 @@ import { categoryColor } from '@/lib/categories';
 import { formatTime, dateToStr } from '@/lib/datetime';
 import { addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Moon, Gift } from 'lucide-react';
+import { Moon, Gift, Users } from 'lucide-react';
+import { isSharedEvent } from '@/lib/users';
 
 const SLOT_HEIGHT = 24;
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 6..23
@@ -76,9 +77,12 @@ export default function WeekGrid({ occs, weekStart, onEdit, onCreateSlot }) {
                                             className="absolute left-0.5 right-0.5 rounded text-left px-1 py-0.5 overflow-hidden bg-card border border-border text-[9px] leading-tight"
                                             style={{ top, height, borderLeftColor: color, borderLeftWidth: 2 }}
                                         >
-                                            <div className="font-medium truncate flex items-center gap-0.5">
-                                                {o.series.event_type === 'reward' && <Gift className="w-2.5 h-2.5 text-primary shrink-0" />}
-                                                <span>{o.series.title}</span>
+                                            <div className="font-medium truncate flex items-center justify-between gap-0.5">
+                                                <div className="flex items-center gap-0.5 min-w-0 truncate">
+                                                    {o.series.event_type === 'reward' && <Gift className="w-2.5 h-2.5 text-primary shrink-0" />}
+                                                    <span className="truncate">{o.series.title}</span>
+                                                </div>
+                                                {isSharedEvent(o.series) && <Users className="w-2.5 h-2.5 text-primary shrink-0 opacity-80" />}
                                             </div>
                                             <div className="text-muted-foreground truncate">{formatTime(start)}</div>
                                         </button>

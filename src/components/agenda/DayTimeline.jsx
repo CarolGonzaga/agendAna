@@ -3,6 +3,7 @@ import EventCard from '@/components/EventCard';
 import { categoryColor } from '@/lib/categories';
 import { formatTime } from '@/lib/datetime';
 import { Check, Moon, Gift } from 'lucide-react';
+import { EventUserBadges } from '@/components/UserAvatar';
 
 const SLOT_HEIGHT = 28; // px per 30 min
 
@@ -65,9 +66,12 @@ export default function DayTimeline({ occs, date, onComplete, onEdit, onCreateSl
                                 className={`w-full h-full rounded-md border-l-2 bg-card border border-border px-2 py-1 overflow-hidden cursor-pointer hover:shadow-sm transition-shadow ${isDone ? 'opacity-50' : ''}`}
                                 style={{ borderLeftColor: color }}
                             >
-                                <div className="text-[11px] font-medium truncate flex items-center gap-1">
-                                    {o.series.event_type === 'reward' && <Gift className="w-3 h-3 text-primary shrink-0" />}
-                                    {o.series.title}
+                                <div className="text-[11px] font-medium truncate flex items-center justify-between gap-1">
+                                    <div className="flex items-center gap-1 min-w-0 truncate">
+                                        {o.series.event_type === 'reward' && <Gift className="w-3 h-3 text-primary shrink-0" />}
+                                        <span className="truncate">{o.series.title}</span>
+                                    </div>
+                                    <EventUserBadges series={o.series} size="xs" className="shrink-0" />
                                 </div>
                                 <div className="text-[10px] text-muted-foreground">{formatTime(start)}</div>
                             </div>

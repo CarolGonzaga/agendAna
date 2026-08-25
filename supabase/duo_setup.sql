@@ -2,6 +2,10 @@
 -- AGENDANA — CONFIGURAÇÃO DUPLA (ANA & CAROL) + RLS COMPARTILHADO + SEED CAROL
 -- ==============================================================================
 
+-- 0. ADICIONAR COLUNAS DE COMPARTILHAMENTO NA TABELA EVENT_SERIES
+ALTER TABLE public.event_series ADD COLUMN IF NOT EXISTS is_shared BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.event_series ADD COLUMN IF NOT EXISTS target_user_ids UUID[] DEFAULT '{}';
+
 -- 1. ATUALIZAR POLÍTICAS DE RLS PARA PERMITIR GERENCIAMENTO COMPARTILHADO ENTRE ANA E CAROL
 DROP POLICY IF EXISTS "Users can manage own event_series" ON public.event_series;
 CREATE POLICY "Duo can manage event_series" ON public.event_series
@@ -62,17 +66,17 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM public.event_series WHERE user_id = carol_id) THEN
         INSERT INTO public.event_series (
             user_id, title, description, category, start_date, start_time, end_time,
-            all_day, is_recurring, recurrence_type, recurrence_days, points, event_type, active
+            all_day, is_recurring, recurrence_type, recurrence_days, points, event_type, is_shared, active
         )
         VALUES
-            (carol_id, 'LIVRE', '', 'Livre', today_date, '07:00', '08:00', false, true, 'weekdays', '{1,2,3,4,5}', 0, 'free_slot', true),
-            (carol_id, 'CAFÉ DA MANHÃ', '', 'Rotina', today_date, '08:00', '09:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true),
-            (carol_id, 'TRABALHO / PROJETO', '', 'Trabalho', today_date, '09:00', '12:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true),
-            (carol_id, 'ALMOÇO', '', 'Rotina', today_date, '12:00', '13:30', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true),
-            (carol_id, 'PASSEAR DOGS', '', 'Rotina', today_date, '13:30', '14:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true),
-            (carol_id, 'TRABALHO / FOCO', '', 'Trabalho', today_date, '14:00', '18:30', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true),
-            (carol_id, 'LIVRE', '', 'Livre', today_date, '18:30', '20:00', false, true, 'weekdays', '{1,2,3,4,5}', 0, 'free_slot', true),
-            (carol_id, 'ACADEMIA', '', 'Saúde', today_date, '20:00', '21:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true);
+            (carol_id, 'LIVRE', '', 'Livre', today_date, '07:00', '08:00', false, true, 'weekdays', '{1,2,3,4,5}', 0, 'free_slot', false, true),
+            (carol_id, 'CAFÉ DA MANHÃ', '', 'Rotina', today_date, '08:00', '09:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true, true),
+            (carol_id, 'TRABALHO / PROJETO', '', 'Trabalho', today_date, '09:00', '12:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', false, true),
+            (carol_id, 'ALMOÇO', '', 'Rotina', today_date, '12:00', '13:30', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true, true),
+            (carol_id, 'PASSEAR DOGS', '', 'Rotina', today_date, '13:30', '14:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true, true),
+            (carol_id, 'TRABALHO / FOCO', '', 'Trabalho', today_date, '14:00', '18:30', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', false, true),
+            (carol_id, 'LIVRE', '', 'Livre', today_date, '18:30', '20:00', false, true, 'weekdays', '{1,2,3,4,5}', 0, 'free_slot', false, true),
+            (carol_id, 'ACADEMIA', '', 'Saúde', today_date, '20:00', '21:00', false, true, 'weekdays', '{1,2,3,4,5}', 10, 'event', true, true);
     END IF;
 
 END $$;

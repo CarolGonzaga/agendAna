@@ -17,6 +17,7 @@ import InstallHint from '@/components/InstallHint';
 import AppIcon from '@/components/AppIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { openFocusMode } from '@/lib/focusHelper';
+import { EventUserBadges } from '@/components/UserAvatar';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -115,6 +116,7 @@ export default function Home() {
 
     const handleSaveEvent = async (payload, editing, targetUserIds = [user.id]) => {
         if (!user?.id) return;
+        const isShared = targetUserIds && targetUserIds.length > 1;
         if (editing?.id) {
             const { error } = await supabase
                 .from('event_series')
@@ -125,10 +127,20 @@ export default function Home() {
             const rows = (targetUserIds && targetUserIds.length ? targetUserIds : [user.id]).map((uid) => ({
                 ...payload,
                 user_id: uid,
+                is_shared: isShared,
+                target_user_ids: targetUserIds,
             }));
-            const { error } = await supabase
+            let { error } = await supabase
                 .from('event_series')
                 .insert(rows);
+            if (error && (error.message?.includes('is_shared') || error.message?.includes('target_user_ids'))) {
+                const fallbackRows = rows.map(({ is_shared, target_user_ids, ...rest }) => ({
+                    ...rest,
+                    description: isShared ? (rest.description ? `${rest.description} [shared]` : '[shared]') : rest.description,
+                }));
+                const res = await supabase.from('event_series').insert(fallbackRows);
+                error = res.error;
+            }
             if (error) console.error('Error creating event:', error);
         }
         await load();
@@ -190,8 +202,9 @@ export default function Home() {
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="min-w-0">
-                                    <div className="font-heading text-xl md:text-2xl font-semibold truncate">
-                                        {current.series.title}
+                                    <div className="font-heading text-xl md:text-2xl font-semibold flex items-center gap-2 flex-wrap">
+                                        <span className="truncate">{current.series.title}</span>
+                                        <EventUserBadges series={current.series} size="sm" />
                                     </div>
                                     <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                                         <span>{formatTime(new Date(current.starts_at))} — {current.ends_at ? formatTime(new Date(current.ends_at)) : ''}</span>
