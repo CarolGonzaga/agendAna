@@ -60,6 +60,30 @@ export function formatTime(date) {
     return '';
 }
 
+export function currentTimeHHMM() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+}
+
+export function isTimeBefore(timeA, timeB) {
+    if (!timeA || !timeB) return false;
+    const [hA, mA] = timeA.slice(0, 5).split(':').map(Number);
+    const [hB, mB] = timeB.slice(0, 5).split(':').map(Number);
+    if (hA !== hB) return hA < hB;
+    return mA < mB;
+}
+
+export function addMinutesToTimeStr(timeStr, minutesToAdd = 30) {
+    if (!timeStr) return '10:00';
+    const [h, m] = timeStr.slice(0, 5).split(':').map(Number);
+    const totalMin = Math.min(23 * 60 + 59, (h || 0) * 60 + (m || 0) + minutesToAdd);
+    const newH = Math.floor(totalMin / 60);
+    const newM = totalMin % 60;
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+}
+
 export function normalizeTimeStr(timeStr) {
     if (!timeStr) return '00:00:00';
     const parts = String(timeStr).trim().split(':');

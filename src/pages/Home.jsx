@@ -113,19 +113,22 @@ export default function Home() {
         }
     };
 
-    const handleSaveEvent = async (payload, editing) => {
+    const handleSaveEvent = async (payload, editing, targetUserIds = [user.id]) => {
         if (!user?.id) return;
         if (editing?.id) {
             const { error } = await supabase
                 .from('event_series')
                 .update({ ...payload, updated_at: new Date().toISOString() })
-                .eq('id', editing.id)
-                .eq('user_id', user.id);
+                .eq('id', editing.id);
             if (error) console.error('Error updating event:', error);
         } else {
+            const rows = (targetUserIds && targetUserIds.length ? targetUserIds : [user.id]).map((uid) => ({
+                ...payload,
+                user_id: uid,
+            }));
             const { error } = await supabase
                 .from('event_series')
-                .insert({ ...payload, user_id: user.id });
+                .insert(rows);
             if (error) console.error('Error creating event:', error);
         }
         await load();

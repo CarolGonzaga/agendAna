@@ -56,13 +56,16 @@ export function runTests() {
     };
     // 2026-08-25 is Tuesday (weekday)
     assert(occursOnDate(weekdaySeries, new Date('2026-08-25T12:00:00')), 'Série de dias úteis deve ocorrer na terça-feira');
-    // 4. Parsing de Horários PostgreSQL
-    import('../datetime.js').then(({ combine, normalizeTimeStr, formatTime }) => {
+    // 4. Parsing e Validação de Horários
+    import('../datetime.js').then(({ combine, normalizeTimeStr, formatTime, isTimeBefore, addMinutesToTimeStr }) => {
         const c1 = combine('2026-08-25', '07:00:00');
         assert(!isNaN(c1.getTime()) && c1.toISOString().includes('2026-08-25'), 'combine com formato PostgreSQL 07:00:00 deve gerar data válida');
         const c2 = combine('2026-08-25', '07:00');
         assert(!isNaN(c2.getTime()) && c2.toISOString().includes('2026-08-25'), 'combine com formato HTML 07:00 deve gerar data válida');
         assert(formatTime('07:00:00') === '07:00', 'formatTime deve formatar 07:00:00 como 07:00');
+        assert(isTimeBefore('08:00', '09:00') === true, 'isTimeBefore deve acusar que 08:00 é anterior a 09:00');
+        assert(isTimeBefore('10:00', '09:00') === false, 'isTimeBefore deve acusar que 10:00 NÃO é anterior a 09:00');
+        assert(addMinutesToTimeStr('09:00', 30) === '09:30', 'addMinutesToTimeStr deve somar 30 minutos corretamente');
     });
 
     // 5. Formatação do Modo Foco
