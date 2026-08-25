@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Moon, Calendar, Gift, User as UserIcon } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Moon, Calendar, Gift, User as UserIcon, Clock } from 'lucide-react';
 import { useAppData } from '@/lib/AppDataContext';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchDayOccurrences } from '@/lib/occurrences';
 import { playChime } from '@/lib/sound';
+import { openFocusMode } from '@/lib/focusHelper';
 import AppIcon from '@/components/AppIcon';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ export default function AppShell() {
     const { profile, settings, loading } = useAppData();
     const { user } = useAuth();
     const loc = useLocation();
+    const navigate = useNavigate();
     const reminded = useRef(new Set());
 
     // In-app foreground reminder checking
@@ -107,6 +109,16 @@ export default function AppShell() {
                             </Link>
                         );
                     })}
+
+                    <div className="pt-2">
+                        <button
+                            onClick={() => openFocusMode(navigate)}
+                            className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                        >
+                            <Clock className="w-4 h-4" />
+                            Modo Foco
+                        </button>
+                    </div>
                 </nav>
 
                 <div className="p-4 border-t border-border/60">

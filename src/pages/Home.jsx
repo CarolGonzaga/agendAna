@@ -15,9 +15,11 @@ import EventModal from '@/components/EventModal';
 import Onboarding from '@/components/Onboarding';
 import InstallHint from '@/components/InstallHint';
 import AppIcon from '@/components/AppIcon';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { openFocusMode } from '@/lib/focusHelper';
 
 export default function Home() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { profile, settings, reload, updateProfile } = useAppData();
     const [occs, setOccs] = useState([]);
@@ -202,22 +204,37 @@ export default function Home() {
                                         <span>{remaining} min restantes</span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleComplete(current)}
-                                    className="shrink-0 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                >
-                                    <Check className="w-5 h-5" /> Concluir
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => openFocusMode(navigate, current.id)}
+                                        className="inline-flex items-center justify-center gap-1.5 h-12 px-4 rounded-xl border border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 text-xs font-semibold active:scale-95 transition-all shadow-sm"
+                                        title="Abrir janela compacta do Modo Foco"
+                                    >
+                                        <Clock className="w-4 h-4" /> Abrir Modo Foco
+                                    </button>
+                                    <button
+                                        onClick={() => handleComplete(current)}
+                                        className="shrink-0 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                        <Check className="w-5 h-5" /> Concluir
+                                    </button>
+                                </div>
                             </div>
                         </section>
                     ) : (
-                        <section className="rounded-2xl bg-card border border-border p-6 text-center">
-                            <Moon className="w-8 h-8 text-primary mx-auto mb-2 opacity-80" />
+                        <section className="rounded-2xl bg-card border border-border p-6 text-center space-y-3">
+                            <Moon className="w-8 h-8 text-primary mx-auto opacity-80" />
                             <p className="text-muted-foreground text-sm md:text-base">
                                 {next
                                     ? `Seu próximo compromisso começa às ${formatTime(new Date(next.starts_at))}.`
                                     : 'Nenhum compromisso agora. Um tempo livre para você relaxar.'}
                             </p>
+                            <button
+                                onClick={() => openFocusMode(navigate)}
+                                className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
+                            >
+                                <Clock className="w-3.5 h-3.5" /> Abrir Modo Foco
+                            </button>
                         </section>
                     )}
 

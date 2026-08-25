@@ -65,6 +65,15 @@ export function runTests() {
         assert(formatTime('07:00:00') === '07:00', 'formatTime deve formatar 07:00:00 como 07:00');
     });
 
+    // 5. Formatação do Modo Foco
+    import('../focusHelper.js').then(({ formatRemainingTimer }) => {
+        assert(formatRemainingTimer(0) === '00:00', 'formatRemainingTimer(0) deve ser 00:00');
+        assert(formatRemainingTimer(-5000) === '00:00', 'formatRemainingTimer negativo deve ser 00:00 (sem números negativos)');
+        assert(formatRemainingTimer(42000) === '00:42', 'formatRemainingTimer(42s) deve ser 00:42');
+        assert(formatRemainingTimer(1476000) === '24:36', 'formatRemainingTimer(24m36s) deve ser 24:36');
+        assert(formatRemainingTimer(5076000) === '01:24:36', 'formatRemainingTimer(1h24m36s) deve ser 01:24:36');
+    });
+
     console.log(`\nRESULTADO: ${passed} passaram, ${failed} falharam.`);
     return { passed, failed };
 }
