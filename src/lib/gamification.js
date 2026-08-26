@@ -53,6 +53,8 @@ export async function completeOccurrence(series, occ, profile, userId) {
 
     const pts = series.points || 0;
     const nowIso = new Date().toISOString();
+    const hadPenalty = !!rec.penalty_processed;
+    const effectivePointsGained = hadPenalty ? pts * 2 : pts;
 
     // 1. Update occurrence
     const { error: occError } = await supabase
@@ -63,6 +65,7 @@ export async function completeOccurrence(series, occ, profile, userId) {
             points_value: pts,
             points_processed: true,
             xp_processed: true,
+            penalty_processed: false,
         })
         .eq('id', rec.id);
 
@@ -81,7 +84,7 @@ export async function completeOccurrence(series, occ, profile, userId) {
                 type: 'event_completed',
                 description: `${series.title} concluído`,
             },
-            { onConflict: 'occurrence_id,type', ignoreDuplicates: true }
+            { onConflict: 'occurrence_id,type' }
         );
 
     if (ptError) {
@@ -114,7 +117,7 @@ export async function completeOccurrence(series, occ, profile, userId) {
     const { error: profError } = await supabase
         .from('profiles')
         .update({
-            current_points: (profile.current_points || 0) + pts,
+            current_points: (profile.current_points || 0) + effectivePointsGained,
             lifetime_points: (profile.lifetime_points || 0) + pts,
             total_xp: newXp,
             level: newLevelInfo.level,

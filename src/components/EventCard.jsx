@@ -24,8 +24,13 @@ export default function EventCard({ occ, onComplete, onEdit, compact }) {
                         {isReward && <Gift className="w-4 h-4 text-primary shrink-0" />}
                         {isFree && <Moon className="w-4 h-4 text-muted-foreground shrink-0" />}
                         <span className={`font-medium truncate ${isFree ? 'text-muted-foreground' : ''}`}>
-                            {isMissed ? 'Encerrado' : s.title}
+                            {s.title}
                         </span>
+                        {isMissed && !isDone && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                                Pendente
+                            </span>
+                        )}
                         {!isFree && <EventUserBadges series={s} size="xs" className="shrink-0 ml-1" />}
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">

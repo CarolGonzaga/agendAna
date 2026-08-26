@@ -2,13 +2,13 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useAppData } from '@/lib/AppDataContext';
 import { fetchDayOccurrences } from '@/lib/occurrences';
-import { completeOccurrence, processMissed } from '@/lib/gamification';
+import { completeOccurrence } from '@/lib/gamification';
 import { greeting, formatDateLong, formatTime, minutesToLabel, durationMinutes } from '@/lib/datetime';
-import { categoryColor } from '@/lib/categories';
 import { playChime } from '@/lib/sound';
 import { supabase } from '@/lib/supabase';
-import { Check, ChevronDown, ChevronUp, Plus, Award, Moon, Clock, Flame } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Plus, Award, Moon, Clock } from 'lucide-react';
 import EventCard from '@/components/EventCard';
+import EventCarousel from '@/components/EventCarousel';
 import StarBurst from '@/components/StarBurst';
 import LevelUpModal from '@/components/LevelUpModal';
 import EventModal from '@/components/EventModal';
@@ -17,7 +17,6 @@ import InstallHint from '@/components/InstallHint';
 import AppIcon from '@/components/AppIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { openFocusMode } from '@/lib/focusHelper';
-import { EventUserBadges } from '@/components/UserAvatar';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -30,7 +29,13 @@ export default function Home() {
     const [levelUp, setLevelUp] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState(null);
-    const processedRef = useRef(false);
+    const [nowTime, setNowTime] = useState(Date.now());
+
+    // Ticker to refresh relative time
+    useEffect(() => {
+        const interval = setInterval(() => setNowTime(Date.now()), 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     const load = useCallback(async () => {
         if (!user?.id) return [];
@@ -44,52 +49,16 @@ export default function Home() {
         if (!user?.id) return;
         (async () => {
             setLoading(true);
-            const list = await load();
-
-            // Process missed events once per load
-            if (!processedRef.current && profile && settings) {
-                processedRef.current = true;
-                const now = Date.now();
-                const missed = list.filter(
-                    (o) =>
-                        o.series.event_type === 'event' &&
-                        o.status === 'scheduled' &&
-                        o.ends_at &&
-                        new Date(o.ends_at).getTime() < now
-                );
-                for (const o of missed) {
-                    await processMissed(o, o.series, profile, settings.allow_negative_points, user.id);
-                }
-                if (missed.length) {
-                    await reload();
-                    await load();
-                }
-            }
+            await load();
             setLoading(false);
         })();
-    }, [user?.id, profile?.id, load, reload, settings]);
+    }, [user?.id, profile?.id, load]);
 
     const now = new Date();
-    const nowTime = now.getTime();
 
-    const current = occs.find(
-        (o) =>
-            o.series.event_type !== 'free_slot' &&
-            o.status === 'scheduled' &&
-            o.ends_at &&
-            new Date(o.starts_at).getTime() <= nowTime &&
-            new Date(o.ends_at).getTime() > nowTime
-    );
-
-    const next = occs.find(
-        (o) =>
-            o.series.event_type !== 'free_slot' &&
-            o.status === 'scheduled' &&
-            new Date(o.starts_at).getTime() > nowTime
-    );
-
-    const eventCount = occs.filter((o) => o.series.event_type === 'event').length;
-    const doneCount = occs.filter((o) => o.series.event_type === 'event' && o.status === 'completed').length;
+    const actionableEvents = occs.filter((o) => o.series.event_type !== 'free_slot');
+    const eventCount = actionableEvents.length;
+    const doneCount = actionableEvents.filter((o) => o.status === 'completed').length;
     const progress = eventCount ? Math.round((doneCount / eventCount) * 100) : 0;
     const pointsToday = occs
         .filter((o) => o.status === 'completed')
@@ -146,10 +115,6 @@ export default function Home() {
         await load();
     };
 
-    const remaining = current && current.ends_at
-        ? Math.max(0, Math.round((new Date(current.ends_at).getTime() - nowTime) / 60000))
-        : 0;
-
     return (
         <div className="space-y-6 animate-rise pb-24 md:pb-12">
             {profile && !profile.onboarded && (
@@ -184,100 +149,38 @@ export default function Home() {
 
             {loading ? (
                 <div className="space-y-4">
-                    <div className="h-36 rounded-2xl bg-card/60 border border-border/50 animate-pulse" />
+                    <div className="h-44 rounded-2xl bg-card/60 border border-border/50 animate-pulse" />
                     <div className="h-24 rounded-2xl bg-card/60 border border-border/50 animate-pulse" />
                     <div className="h-24 rounded-2xl bg-card/60 border border-border/50 animate-pulse" />
                 </div>
             ) : (
                 <>
-                    {/* Agora */}
-                    {current ? (
-                        <section className="rounded-2xl bg-card border border-primary/20 p-5 shadow-sm relative overflow-hidden animate-fade">
-                            <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-primary" />
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-primary">Agora</span>
-                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                                    +{current.series.points || 10} pts
-                                </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="min-w-0">
-                                    <div className="font-heading text-xl md:text-2xl font-semibold flex items-center gap-2 flex-wrap">
-                                        <span className="truncate">{current.series.title}</span>
-                                        <EventUserBadges series={current.series} size="sm" />
-                                    </div>
-                                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                                        <span>{formatTime(new Date(current.starts_at))} — {current.ends_at ? formatTime(new Date(current.ends_at)) : ''}</span>
-                                        {current.ends_at && (
-                                            <>
-                                                <span>·</span>
-                                                <span>{minutesToLabel(durationMinutes(current.starts_at, current.ends_at))}</span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="text-sm font-medium text-primary mt-1.5 flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        <span>{remaining} min restantes</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => openFocusMode(navigate, current.id)}
-                                        className="inline-flex items-center justify-center gap-1.5 h-12 px-4 rounded-xl border border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 text-xs font-semibold active:scale-95 transition-all shadow-sm"
-                                        title="Abrir janela compacta do Modo Foco"
-                                    >
-                                        <Clock className="w-4 h-4" /> Abrir Modo Foco
-                                    </button>
-                                    <button
-                                        onClick={() => handleComplete(current)}
-                                        className="shrink-0 inline-flex items-center justify-center gap-2 h-12 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                    >
-                                        <Check className="w-5 h-5" /> Concluir
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
+                    {/* Event Carousel Section */}
+                    {actionableEvents.length > 0 ? (
+                        <EventCarousel
+                            events={occs}
+                            nowTime={nowTime}
+                            onComplete={handleComplete}
+                            onEdit={(target) => setEditTarget(target)}
+                            onOpenFocus={(occId) => openFocusMode(navigate, occId)}
+                        />
                     ) : (
-                        <section className="rounded-2xl bg-card border border-border p-6 text-center space-y-3">
+                        <section className="rounded-2xl bg-card border border-border p-6 text-center space-y-3 shadow-sm">
                             <Moon className="w-8 h-8 text-primary mx-auto opacity-80" />
                             <p className="text-muted-foreground text-sm md:text-base">
-                                {next
-                                    ? `Seu próximo compromisso começa às ${formatTime(new Date(next.starts_at))}.`
-                                    : 'Nenhum compromisso agora. Um tempo livre para você relaxar.'}
+                                Nenhum compromisso agendado para hoje. Aproveite o seu tempo livre!
                             </p>
                             <button
-                                onClick={() => openFocusMode(navigate)}
+                                onClick={() => setModalOpen(true)}
                                 className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
                             >
-                                <Clock className="w-3.5 h-3.5" /> Abrir Modo Foco
+                                <Plus className="w-3.5 h-3.5" /> Adicionar primeiro compromisso
                             </button>
                         </section>
                     )}
 
-                    {/* Depois */}
-                    {next && (
-                        <section className="rounded-2xl bg-card border border-border p-5">
-                            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3 font-medium">Depois</div>
-                            <div className="flex items-center gap-3.5">
-                                <div
-                                    className="w-1.5 h-10 rounded-full shrink-0"
-                                    style={{ background: categoryColor(next.series.category) }}
-                                />
-                                <div className="min-w-0 flex-1">
-                                    <div className="font-medium text-base truncate">{next.series.title}</div>
-                                    <div className="text-sm text-muted-foreground mt-0.5">
-                                        {formatTime(new Date(next.starts_at))} — {next.ends_at ? formatTime(new Date(next.ends_at)) : ''}
-                                    </div>
-                                </div>
-                                <span className="text-xs px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground shrink-0">
-                                    {next.series.category || 'Trabalho'}
-                                </span>
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Progresso do dia */}
-                    <section className="rounded-2xl bg-card border border-border p-5 space-y-3">
+                    {/* Progress Bar of the Day */}
+                    <section className="rounded-2xl bg-card border border-border p-5 space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="text-sm font-semibold">Seu dia</div>
                             <div className="text-sm font-medium text-primary">{progress}%</div>
@@ -296,14 +199,14 @@ export default function Home() {
                         </div>
                     </section>
 
-                    {/* Ver todo o dia */}
+                    {/* Full Timeline List Accordion */}
                     <div className="pt-2">
                         <button
                             onClick={() => setExpanded((e) => !e)}
                             className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1"
                         >
                             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            {expanded ? 'Ocultar visão detalhada' : 'Ver todo o dia'}
+                            {expanded ? 'Ocultar visão detalhada' : 'Ver todos os compromissos do dia'}
                         </button>
                         {expanded && (
                             <div className="space-y-2.5 mt-3 animate-fade">
