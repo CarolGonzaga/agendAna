@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useAppData } from '@/lib/AppDataContext';
 import { fetchDayOccurrences } from '@/lib/occurrences';
-import { completeOccurrence } from '@/lib/gamification';
+import { completeOccurrence, updateOccurrenceStatus } from '@/lib/gamification';
 import { greeting, formatDateLong, formatTime, minutesToLabel, durationMinutes } from '@/lib/datetime';
 import { playChime } from '@/lib/sound';
 import { supabase } from '@/lib/supabase';
@@ -12,11 +12,13 @@ import EventCarousel from '@/components/EventCarousel';
 import StarBurst from '@/components/StarBurst';
 import LevelUpModal from '@/components/LevelUpModal';
 import EventModal from '@/components/EventModal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import Onboarding from '@/components/Onboarding';
 import InstallHint from '@/components/InstallHint';
 import AppIcon from '@/components/AppIcon';
 import { Link, useNavigate } from 'react-router-dom';
 import { openFocusMode } from '@/lib/focusHelper';
+import { toast } from 'sonner';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -29,6 +31,7 @@ export default function Home() {
     const [levelUp, setLevelUp] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
     const [nowTime, setNowTime] = useState(Date.now());
 
     // Ticker to refresh relative time
@@ -81,6 +84,52 @@ export default function Home() {
         if (res.leveledUp) {
             setTimeout(() => setLevelUp(res.newLevel), 1200);
         }
+    };
+
+    const handleStatusChange = async (series, occ, newStatus) => {
+        if (!user?.id || !profile) return;
+        const res = await updateOccurrenceStatus(series, occ, newStatus, profile, user.id);
+        
+        if (newStatus === 'completed' && res?.pointsGained) {
+            if (settings?.sounds_enabled) {
+                const vol = (settings.app_volume || 70) / 100;
+                playChime(vol);
+            }
+            setBurst(res.pointsGained);
+            if (res.leveledUp) {
+                setTimeout(() => setLevelUp(res.newLevel), 1200);
+            }
+        }
+
+        await reload();
+        await load();
+    };
+
+    const handleDelete = async (deleteEntireSeries = true) => {
+        if (!deleteTarget || !user?.id) return;
+        if (deleteEntireSeries || !deleteTarget.series.is_recurring) {
+            await supabase
+                .from('event_series')
+                .update({ active: false, updated_at: new Date().toISOString() })
+                .eq('id', deleteTarget.series.id)
+                .eq('user_id', user.id);
+        } else {
+            // Cancel just this occurrence
+            await supabase.from('event_occurrences').upsert(
+                {
+                    user_id: user.id,
+                    event_series_id: deleteTarget.series.id,
+                    occurrence_date: deleteTarget.occurrence_date,
+                    starts_at: deleteTarget.starts_at,
+                    ends_at: deleteTarget.ends_at,
+                    status: 'cancelled',
+                },
+                { onConflict: 'event_series_id,occurrence_date' }
+            );
+        }
+        setDeleteTarget(null);
+        toast.success('Evento excluído.');
+        await load();
     };
 
     const handleSaveEvent = async (payload, editing, targetUserIds = [user.id]) => {
@@ -238,16 +287,39 @@ export default function Home() {
                 </>
             )}
 
+            {/* Create Event Modal */}
             <EventModal
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}
                 onSave={handleSaveEvent}
             />
+
+            {/* Edit Event Modal */}
             <EventModal
                 open={!!editTarget}
                 editing={editTarget?.series}
+                occurrence={editTarget}
                 onClose={() => setEditTarget(null)}
                 onSave={handleSaveEvent}
+                onDelete={(target) => setDeleteTarget(target)}
+                onStatusChange={handleStatusChange}
+            />
+
+            {/* Confirm Delete Dialog */}
+            <ConfirmDialog
+                open={!!deleteTarget}
+                title="Excluir evento"
+                description={
+                    deleteTarget?.series?.is_recurring
+                        ? "Deseja excluir apenas esta ocorrência ou toda a série recorrente?"
+                        : "O evento será removido da sua agenda. Tem certeza?"
+                }
+                confirmLabel={deleteTarget?.series?.is_recurring ? "Excluir toda a série" : "Excluir"}
+                secondaryLabel={deleteTarget?.series?.is_recurring ? "Somente este evento" : null}
+                onSecondary={() => handleDelete(false)}
+                destructive
+                onConfirm={() => handleDelete(true)}
+                onCancel={() => setDeleteTarget(null)}
             />
         </div>
     );

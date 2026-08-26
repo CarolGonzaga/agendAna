@@ -138,6 +138,66 @@ export async function completeOccurrence(series, occ, profile, userId) {
     };
 }
 
+export async function updateOccurrenceStatus(series, occ, newStatus, profile, userId) {
+    if (newStatus === 'completed') {
+        return await completeOccurrence(series, occ, profile, userId);
+    }
+
+    const rec = await ensureOccurrenceRecord(series, occ, userId);
+    if (!rec) return null;
+
+    const nowIso = new Date().toISOString();
+    const previousStatus = rec.status;
+    const pts = series.points || 0;
+
+    // If it was completed before, revert points and XP
+    if (previousStatus === 'completed' && rec.points_processed) {
+        const newPoints = Math.max(0, (profile?.current_points || 0) - pts);
+        const newXp = Math.max(0, (profile?.total_xp || 0) - pts);
+        const newLevelInfo = getLevel(newXp);
+
+        await supabase
+            .from('profiles')
+            .update({
+                current_points: newPoints,
+                total_xp: newXp,
+                level: newLevelInfo.level,
+                events_completed: Math.max(0, (profile?.events_completed || 1) - 1),
+                updated_at: nowIso,
+            })
+            .eq('user_id', userId);
+
+        await supabase
+            .from('points_transactions')
+            .delete()
+            .eq('occurrence_id', rec.id)
+            .eq('type', 'event_completed');
+
+        await supabase
+            .from('xp_transactions')
+            .delete()
+            .eq('occurrence_id', rec.id);
+    }
+
+    // Update occurrence record
+    const { error: occError } = await supabase
+        .from('event_occurrences')
+        .update({
+            status: newStatus,
+            points_processed: false,
+            xp_processed: false,
+            penalty_processed: false,
+            completed_at: null,
+        })
+        .eq('id', rec.id);
+
+    if (occError) {
+        console.error('Error updating occurrence status:', occError);
+    }
+
+    return { ok: true, status: newStatus };
+}
+
 export async function processMissed(occ, series, profile, allowNegative, userId) {
     const rec = await ensureOccurrenceRecord(series, occ, userId);
     if (!rec || rec.status !== 'scheduled' || rec.penalty_processed) {

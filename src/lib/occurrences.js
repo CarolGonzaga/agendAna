@@ -101,6 +101,12 @@ export async function fetchRangeOccurrences(startDate, endDate, userId) {
     return allOccs;
 }
 
+export function isExpired24h(endsAt) {
+    if (!endsAt) return false;
+    const endMs = new Date(endsAt).getTime();
+    return Date.now() > endMs + 24 * 60 * 60 * 1000;
+}
+
 export function buildDayOccurrences(seriesList, date, records = []) {
     const occs = [];
     for (const s of seriesList) {
@@ -111,7 +117,14 @@ export function buildDayOccurrences(seriesList, date, records = []) {
             (r) => r.event_series_id === s.id && r.occurrence_date === o.occurrence_date
         );
         o.id = rec?.id || `virtual-${s.id}-${o.occurrence_date}`;
-        o.status = rec ? rec.status : 'scheduled';
+
+        let status = rec ? rec.status : 'scheduled';
+        // Regra: considerar tarefa como não concluída quando passarem 24h da data/horário de fim
+        if (status === 'scheduled' && o.ends_at && isExpired24h(o.ends_at)) {
+            status = 'missed';
+        }
+
+        o.status = status;
         o.record = rec || null;
         o.points_value = s.points || 0;
         occs.push(o);

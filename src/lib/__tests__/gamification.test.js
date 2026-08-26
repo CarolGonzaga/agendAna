@@ -77,6 +77,19 @@ export function runTests() {
         assert(formatRemainingTimer(5076000) === '01:24:36', 'formatRemainingTimer(1h24m36s) deve ser 01:24:36');
     });
 
+    // 6. Expiração 24h de Tarefas
+    import('../occurrences.js').then(({ isExpired24h }) => {
+        const now = Date.now();
+        const past10h = new Date(now - 10 * 3600 * 1000).toISOString();
+        const past25h = new Date(now - 25 * 3600 * 1000).toISOString();
+        const future5h = new Date(now + 5 * 3600 * 1000).toISOString();
+
+        assert(isExpired24h(past10h) === false, 'Evento encerrado há 10h NÃO deve estar expirado (>24h)');
+        assert(isExpired24h(past25h) === true, 'Evento encerrado há 25h DEVE estar expirado (>24h)');
+        assert(isExpired24h(future5h) === false, 'Evento futuro NÃO deve estar expirado');
+        assert(isExpired24h(null) === false, 'Evento sem data/horário de fim NÃO deve expirar');
+    });
+
     console.log(`\nRESULTADO: ${passed} passaram, ${failed} falharam.`);
     return { passed, failed };
 }

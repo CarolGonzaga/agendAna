@@ -16,11 +16,12 @@ import { CATEGORIES } from '@/lib/categories';
 import { useAppData } from '@/lib/AppDataContext';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchDayOccurrences, overlaps } from '@/lib/occurrences';
+import { updateOccurrenceStatus } from '@/lib/gamification';
 import { dateToStr, formatTime, combine, currentTimeHHMM, isTimeBefore, addMinutesToTimeStr } from '@/lib/datetime';
 import { USER_IDS, APP_USERS } from '@/lib/users';
 import { EventUserBadges, UserAvatar } from '@/components/UserAvatar';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { Trash2, Users, Moon, Gem, AlertCircle } from 'lucide-react';
+import { Trash2, Users, Moon, Gem, AlertCircle, Check, X, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 const WEEKDAYS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
@@ -30,12 +31,14 @@ export default function EventModal({
     onClose,
     onSave,
     editing,
+    occurrence,
     initialDate,
     initialStart,
     initialEnd,
     onDelete,
+    onStatusChange,
 }) {
-    const { settings } = useAppData();
+    const { settings, profile, reload } = useAppData();
     const { user } = useAuth();
     const today = dateToStr(new Date());
 
@@ -50,6 +53,7 @@ export default function EventModal({
     const [recType, setRecType] = useState('weekly');
     const [recDays, setRecDays] = useState([1, 2, 3, 4, 5]);
     const [assignedTo, setAssignedTo] = useState('both'); // 'both' | 'ana' | 'carol'
+    const [status, setStatus] = useState('scheduled'); // 'completed' | 'missed' | 'scheduled'
     const [conflict, setConflict] = useState(null);
     const [saving, setSaving] = useState(false);
     const [timeError, setTimeError] = useState('');
@@ -70,6 +74,7 @@ export default function EventModal({
             setRecType(editing.recurrence_type || 'weekly');
             setRecDays(editing.recurrence_days || [1, 2, 3, 4, 5]);
             setAssignedTo('current');
+            setStatus(occurrence?.status || 'scheduled');
         } else if (open) {
             const targetDate = initialDate || today;
             const isTargetToday = targetDate === today;
@@ -97,10 +102,11 @@ export default function EventModal({
             setRecType('weekly');
             setRecDays([1, 2, 3, 4, 5]);
             setAssignedTo('both'); // Default for duo: both users
+            setStatus('scheduled');
         }
         setConflict(null);
         setTimeError('');
-    }, [editing, open, initialDate, initialStart, initialEnd, settings?.default_event_points, today]);
+    }, [editing, occurrence, open, initialDate, initialStart, initialEnd, settings?.default_event_points, today]);
 
     // Handle date change
     const handleDateChange = (newDate) => {
@@ -157,7 +163,7 @@ export default function EventModal({
 
     const buildPayload = () => ({
         title: title.trim(),
-        description: '',
+        description: editing?.description || '',
         category,
         start_date: date,
         start_time: allDay ? '00:00' : startTime,
@@ -172,7 +178,7 @@ export default function EventModal({
                 ? [1, 2, 3, 4, 5]
                 : [],
         points: Number(points) || 0,
-        event_type: 'event',
+        event_type: editing?.event_type || 'event',
         active: true,
     });
 
@@ -224,6 +230,18 @@ export default function EventModal({
             }
             const targets = getTargetUserIds();
             await onSave(payload, editing, targets);
+
+            // Handle status change if editing
+            if (editing && occurrence && status !== occurrence.status) {
+                if (onStatusChange) {
+                    await onStatusChange(editing, occurrence, status);
+                } else {
+                    await updateOccurrenceStatus(editing, occurrence, status, profile, user?.id);
+                    if (reload) await reload();
+                }
+            }
+
+            toast.success(editing ? 'Evento atualizado!' : 'Evento criado com sucesso!');
             onClose();
         } catch (e) {
             console.error('Error saving event:', e);
@@ -251,6 +269,56 @@ export default function EventModal({
                                     Compromisso de:
                                 </span>
                                 <EventUserBadges series={editing} size="sm" showNames={true} />
+                            </div>
+                        )}
+
+                        {/* Status Switcher when editing */}
+                        {editing && (
+                            <div className="space-y-2 rounded-xl bg-secondary/30 p-3 border border-border">
+                                <Label className="text-xs font-semibold flex items-center justify-between text-muted-foreground uppercase tracking-wider">
+                                    <span>Status da Atividade</span>
+                                    <span className="text-[11px] font-normal normal-case text-muted-foreground">
+                                        Clique para alterar
+                                    </span>
+                                </Label>
+                                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatus('completed')}
+                                        className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                            status === 'completed'
+                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        <Check className="w-3.5 h-3.5" />
+                                        <span>Concluído</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatus('missed')}
+                                        className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                            status === 'missed'
+                                                ? 'bg-rose-600 text-white shadow-sm'
+                                                : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                        <span>Não concluído</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStatus('scheduled')}
+                                        className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                            status === 'scheduled'
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        <Clock className="w-3.5 h-3.5" />
+                                        <span>Pendente</span>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -308,7 +376,7 @@ export default function EventModal({
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="O que você precisa fazer?"
-                                autoFocus
+                                autoFocus={!editing}
                                 className="h-11 rounded-xl"
                             />
                         </div>
@@ -437,14 +505,16 @@ export default function EventModal({
                     </div>
 
                     <DialogFooter className="flex-row items-center justify-between gap-2 pt-2 border-t border-border/60">
-                        {editing && onDelete ? (
+                        {editing ? (
                             <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => {
                                     onClose();
-                                    onDelete({ series: editing, occurrence_date: date });
+                                    if (onDelete) {
+                                        onDelete(occurrence || { series: editing, occurrence_date: date });
+                                    }
                                 }}
                                 className="text-destructive hover:bg-destructive/10 text-xs px-2.5 h-9"
                             >

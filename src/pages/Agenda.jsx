@@ -17,6 +17,7 @@ import MonthGrid from '@/components/agenda/MonthGrid';
 import EventModal from '@/components/EventModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { supabase } from '@/lib/supabase';
+import { updateOccurrenceStatus } from '@/lib/gamification';
 import {
     startOfWeek,
     addDays,
@@ -29,7 +30,7 @@ import { ptBR } from 'date-fns/locale';
 
 export default function Agenda() {
     const { user } = useAuth();
-    const { profile, settings } = useAppData();
+    const { profile, settings, reload } = useAppData();
     const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true;
     const [view, setView] = useState(isDesktop ? 'week' : 'day');
     const [cursor, setCursor] = useState(new Date());
@@ -129,6 +130,13 @@ export default function Agenda() {
             );
         }
         setDeleteTarget(null);
+        await load();
+    };
+
+    const handleStatusChange = async (series, occ, newStatus) => {
+        if (!user?.id || !profile) return;
+        await updateOccurrenceStatus(series, occ, newStatus, profile, user.id);
+        await reload();
         await load();
     };
 
@@ -304,10 +312,12 @@ export default function Agenda() {
                 }}
                 onSave={handleSave}
                 editing={editTarget?.series}
+                occurrence={editTarget}
                 initialDate={slotPrefill?.initialDate}
                 initialStart={slotPrefill?.initialStart}
                 initialEnd={slotPrefill?.initialEnd}
                 onDelete={(occ) => setDeleteTarget(occ)}
+                onStatusChange={handleStatusChange}
             />
 
             <ConfirmDialog
